@@ -11,9 +11,9 @@ from binance.spot import Spot
 
 
 @dataclass
-class ExchangeData:
-    symbol: str
-    price: Optional[Decimal] = None
+class PriceData:
+    ticker: str
+    price_in_btc: Decimal = Decimal(0)
     error: Optional[str] = None
 
 
@@ -23,22 +23,17 @@ class SpotService:
         self.client = spot_client
         self._logger = logging.getLogger(__name__)
 
-    def get_prices(self, symbols: list[str]) -> list[ExchangeData]:
-        btc_symbol = "BTC"
-        self._logger.info(f"getting prices for: {symbols}")
+    def get_prices(self, tickers: list[str]) -> list[PriceData]:
+        btc_ticker = "BTC"
+        self._logger.info(f"getting prices for: {tickers}")
         result = []
-        for symbol in symbols:
-            data = ExchangeData(symbol=symbol)
+        for ticker in tickers:
+            data = PriceData(ticker=ticker)
             try:
-                response = self.client.ticker_price(symbol + btc_symbol)
+                response = self.client.ticker_price(ticker + btc_ticker)
                 price = Decimal(response.get("price"))
-                self._logger.info(f"price of {symbol} = {price}")
-
-                if price > 1:
-                    self._logger.info(f"price of {symbol} higher than BTC")
-                if price == 1:
-                    self._logger.info(f"price of {symbol} equal to BTC")
-                data.price = price
+                self._logger.info(f"price of {ticker} = {price}")
+                data.price_in_btc = price
 
             except ClientError as err:
                 self._logger.error(err)
@@ -54,7 +49,7 @@ class SpotService:
         except ConnectionError:
             raise Exception(f"{self.client.base_url} connectivity problems")
 
-    def write_to_csv(self, data: list[ExchangeData]):
+    def write_to_csv(self, data: list[PriceData]):
         sorted_data = self.sort_exchange_data_by_price(data)
 
         try:
@@ -64,7 +59,7 @@ class SpotService:
             os.makedirs(path, exist_ok=True)
             file_name = f"exchange_rates_{timestr}.csv"
             with open(path + file_name, "w") as f:
-                flds = [field.name for field in fields(ExchangeData)]
+                flds = [field.name for field in fields(PriceData)]
                 w = csv.DictWriter(f, flds)
                 w.writeheader()
                 w.writerows([asdict(prop) for prop in sorted_data])
@@ -74,5 +69,5 @@ class SpotService:
             raise err
 
     @staticmethod
-    def sort_exchange_data_by_price(data: list[ExchangeData]):
-        return sorted(data, key=lambda d: d.price)
+    def sort_exchange_data_by_price(data: list[PriceData]):
+        return sorted(data, key=lambda d: d.price_in_btc)

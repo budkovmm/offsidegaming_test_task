@@ -13,7 +13,7 @@ if __name__ == '__main__':
     log_level = os.getenv("LOG_LEVEL", "INFO")
     api_key = os.getenv("API_KEY", "")
     base_url = os.getenv("BASE_URL", "https://api.binance.com")
-    cryptocurrencies_list = json.loads(os.getenv("CRYPTOCURRENCIES_LIST", "[]"))
+    tickers = json.loads(os.getenv("TICKERS", "[]"))
 
     # Initialize logger
     logging.basicConfig(level=log_level)
@@ -27,7 +27,10 @@ if __name__ == '__main__':
     spot_service.check_connectivity()
 
     # Getting prices
-    prices = spot_service.get_prices(cryptocurrencies_list)
+    prices = spot_service.get_prices(tickers)
 
     # Write data to the csv file
     spot_service.write_to_csv(prices)
+
+    # Log tickers with price lower than BTC
+    logger.info(f"tickers with price lower than BTC {[x.ticker for x in prices if x.price_in_btc <= 1]}")
