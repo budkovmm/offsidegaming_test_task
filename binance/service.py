@@ -1,9 +1,11 @@
 import csv
 import logging
+import os
 import time
 
 from _decimal import Decimal
 from dataclasses import dataclass, asdict, fields
+from typing import Optional
 from binance.errors import ClientError
 from binance.spot import Spot
 
@@ -11,8 +13,8 @@ from binance.spot import Spot
 @dataclass
 class ExchangeData:
     symbol: str
-    price: str = None
-    error: str = None
+    price: Optional[Decimal] = None
+    error: Optional[str] = None
 
 
 class SpotService:
@@ -59,6 +61,7 @@ class SpotService:
             self._logger.info("start writing data to the file")
             timestr = time.strftime("%Y%m%d-%H%M%S")
             path = "./output/"
+            os.makedirs(path, exist_ok=True)
             file_name = f"exchange_rates_{timestr}.csv"
             with open(path + file_name, "w") as f:
                 flds = [field.name for field in fields(ExchangeData)]
