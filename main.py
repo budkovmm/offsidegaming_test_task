@@ -33,4 +33,4 @@ if __name__ == '__main__':
     spot_service.write_to_csv(prices)
 
     # Log tickers with price lower than BTC
-    logger.info(f"tickers with price lower than BTC {[x.ticker for x in prices if x.price_in_btc <= 1]}")
+    logger.info(f"tickers with price lower than BTC {[x.ticker for x in prices if x.price_in_btc < 1]}")
